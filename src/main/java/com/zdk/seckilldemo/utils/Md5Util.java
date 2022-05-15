@@ -31,8 +31,10 @@ public class Md5Util {
      * @return
      */
     public static String firstEncryption(String inputPass){
-        String str = SALT.charAt(0)+SALT.charAt(2)+inputPass+SALT.charAt(5)+SALT.charAt(4);
-        return md5(str);
+        StringBuilder sb = new StringBuilder();
+        //这里不能用String去+  因为char相加没有变成字符相加 而是ASCII码的数字相加
+        sb.append(SALT.charAt(0)).append(SALT.charAt(2)).append(inputPass).append(SALT.charAt(5)).append(SALT.charAt(4));
+        return md5(sb.toString());
     }
 
     /**

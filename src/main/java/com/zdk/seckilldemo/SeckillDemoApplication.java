@@ -9,7 +9,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
  * @author zdk
  */
 @SpringBootApplication
-@MapperScan("com.zdk.seckilldemo")
+@MapperScan("com.zdk.seckilldemo.mapper")
 @EnableOpenApi
 public class SeckillDemoApplication {
 

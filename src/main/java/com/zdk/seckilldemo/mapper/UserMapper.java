@@ -2,6 +2,7 @@ package com.zdk.seckilldemo.mapper;
 
 import com.zdk.seckilldemo.pojo.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.springframework.stereotype.Repository;
 
 /**
  * <p>

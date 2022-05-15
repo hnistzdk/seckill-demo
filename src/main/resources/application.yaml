@@ -27,7 +27,7 @@ spring:
   #数据源 用Hikari
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/seckill?characterEncoding=utf8&amp;useUnicode=true&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/seckill?characterEncoding=utf8&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: root
     hikari:
@@ -52,7 +52,7 @@ spring:
     host: 211.69.238.77
     password: zdk13696086376.
     port: 6379
-    database: 0
+    database: 1
     timeout: 10000ms
     lettuce:
       pool:
