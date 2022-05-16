@@ -2,6 +2,9 @@ package com.zdk.seckilldemo.service;
 
 import com.zdk.seckilldemo.pojo.Order;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zdk.seckilldemo.pojo.User;
+import com.zdk.seckilldemo.vo.ApiResp;
+import com.zdk.seckilldemo.vo.GoodsVo;
 
 /**
  * <p>
@@ -12,5 +15,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2022-05-15
  */
 public interface OrderService extends IService<Order> {
-
+    /**
+     * 进行秒杀
+     * @param user
+     * @param goodsVo
+     * @return
+     */
+    ApiResp seckill(User user, GoodsVo goodsVo);
 }

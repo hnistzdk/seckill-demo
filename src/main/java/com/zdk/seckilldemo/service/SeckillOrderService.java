@@ -2,6 +2,9 @@ package com.zdk.seckilldemo.service;
 
 import com.zdk.seckilldemo.pojo.SeckillOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zdk.seckilldemo.pojo.User;
+import com.zdk.seckilldemo.vo.ApiResp;
+import com.zdk.seckilldemo.vo.GoodsVo;
 
 /**
  * <p>

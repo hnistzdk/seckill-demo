@@ -2,6 +2,9 @@ package com.zdk.seckilldemo.mapper;
 
 import com.zdk.seckilldemo.pojo.Goods;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.zdk.seckilldemo.vo.GoodsVo;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @since 2022-05-15
  */
 public interface GoodsMapper extends BaseMapper<Goods> {
-
+    List<GoodsVo> findGoodsVo();
+    GoodsVo findGoodsVoById(Long id);
 }

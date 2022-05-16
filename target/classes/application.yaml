@@ -36,7 +36,7 @@ spring:
       #最小空闲连接数
       minimum-idle: 5
       #空闲连接存货的最大时间 默认600000(10分钟) 这里设置为30分钟
-      idle-timeout: 1800000
+      idle-timeout: 600000
       #最大连接数 默认10
       maximum-pool-size: 10
       #从连接池返回的连接自动提交
@@ -53,15 +53,18 @@ spring:
     password: zdk13696086376.
     port: 6379
     database: 1
+    #连接超时时间
     timeout: 10000ms
     lettuce:
       pool:
         #最大连接数 默认8
         max-active: 8
-        #最大连接阻塞时间
+        #最大连接阻塞时间 默认-1
         max-wait: 1000ms
         #最大空闲连接，默认8
         max-idle: 200
+
+
   #RabbitMQ
   rabbitmq:
     #服务器

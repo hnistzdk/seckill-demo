@@ -14,6 +14,14 @@ public class ApiResp {
         return new ApiResp(ApiRespEnum.SUCCESS.getCode(), ApiRespEnum.SUCCESS.getMessage(), null);
     }
 
+    public static ApiResp success(boolean result) {
+        if (result){
+            return new ApiResp(ApiRespEnum.SUCCESS.getCode(), ApiRespEnum.SUCCESS.getMessage(), null);
+        }else{
+            return new ApiResp(ApiRespEnum.ERROR.getCode(), ApiRespEnum.ERROR.getMessage(), null);
+        }
+    }
+
     public static ApiResp success(Object object) {
         return new ApiResp(ApiRespEnum.SUCCESS.getCode(), ApiRespEnum.SUCCESS.getMessage(), object);
     }
@@ -24,6 +32,14 @@ public class ApiResp {
 
     public static ApiResp error(ApiRespEnum apiRespEnum, Object object) {
         return new ApiResp(apiRespEnum.getCode(), apiRespEnum.getMessage(), object);
+    }
+
+    public boolean isSuccess(ApiResp apiResp){
+        return apiResp.code == ApiRespEnum.SUCCESS.getCode();
+    }
+
+    public boolean isFail(ApiResp apiResp){
+        return !isSuccess(apiResp);
     }
 
     public ApiResp(long code, String message, Object object) {

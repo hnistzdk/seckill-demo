@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2022-05-15
  */
 @RestController
-@RequestMapping("/seckill-order")
+@RequestMapping("/seckilOrder")
 public class SeckillOrderController {
 
 }

@@ -92,10 +92,10 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
         <!--Spring的分布式session-->
-        <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session-data-redis</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.session</groupId>-->
+<!--            <artifactId>spring-session-data-redis</artifactId>-->
+<!--        </dependency>-->
 
         <!--RabbitMQ-->
         <dependency>

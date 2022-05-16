@@ -4,7 +4,11 @@ import com.zdk.seckilldemo.pojo.Goods;
 import com.zdk.seckilldemo.mapper.GoodsMapper;
 import com.zdk.seckilldemo.service.GoodsService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zdk.seckilldemo.vo.GoodsVo;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -16,5 +20,16 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements GoodsService {
+    @Resource
+    private GoodsMapper goodsMapper;
 
+    @Override
+    public List<GoodsVo> findGoodsVo() {
+        return goodsMapper.findGoodsVo();
+    }
+
+    @Override
+    public GoodsVo findGoodsVoById(Long id) {
+        return goodsMapper.findGoodsVoById(id);
+    }
 }

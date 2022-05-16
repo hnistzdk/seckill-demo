@@ -22,4 +22,10 @@ public interface UserService extends IService<User> {
      */
     ApiResp doLogin(LoginVo loginVo);
 
+    /**
+     * 通过userTicket cookie获取用户信息
+     * @param ticket
+     * @return
+     */
+    User getUserByCookie(String ticket);
 }

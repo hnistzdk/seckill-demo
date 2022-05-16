@@ -21,7 +21,7 @@
         <span th:if="${user eq null}"> 您还没有登录，请登陆后再操作<br/></span>
         <span>没有收货地址的提示。。。</span>
     </div>
-    <table class="table" id="goods">
+    <table class="table" id="goods" th:if="${user!=null}">
         <tr>
             <td>商品名称</td>
             <td colspan="3" th:text="${goods.goodsName}"></td>
@@ -35,6 +35,7 @@
             <td th:text="${#dates.format(goods.startDate,'yyyy-MM-dd HH:mm:ss')}"></td>
             <td id="seckillTip">
                 <input type="hidden" id="remainSeconds" th:value="${remainSeconds}">
+                <input type="hidden" id="seckillSeconds" th:value="${seckillSeconds}">
                 <span th:if="${secKillStatus eq 0}">秒杀倒计时: <span id="countDown" th:text="${remainSeconds}"></span>秒
                 </span>
                 <span th:if="${secKillStatus eq 1}">秒杀进行中</span>
@@ -63,11 +64,16 @@
 </div>
 </body>
 <script>
-    $(function () {
+    // $(document).ready(function () {
+    //     countDown();
+    // });
+
+    window.onload = function () {
         countDown();
-    });
+    }
 
     function countDown() {
+        //秒杀开始时间还有多少秒
         var remainSeconds = $("#remainSeconds").val();
         var timeout;
         //秒杀还未开始
@@ -80,16 +86,39 @@
             }, 1000);
             // 秒杀进行中
         } else if (remainSeconds == 0) {
+            console.log('进入秒杀进行')
             $("#buyButton").attr("disabled", false);
             if (timeout) {
                 clearTimeout(timeout);
             }
             $("#seckillTip").html("秒杀进行中")
-        } else {
+            //进入秒杀进行时  开始减小秒杀持续时间
+            // downSeckillSeconds();
+        }
+        else {
             $("#buyButton").attr("disabled", true);
             $("#seckillTip").html("秒杀已经结束");
         }
-    };
+    }
+
+    function downSeckillSeconds() {
+        //秒杀持续时间多少秒
+        //如果已进入到已进行 减减小这各seckillSeconds
+        console.log('进入秒杀倒计时')
+        let seckillSeconds = document.getElementById('seckillSeconds').value;
+        // var seckillSeconds = $("#seckillSeconds").val();
+        console.log('seckillSeconds',seckillSeconds)
+        var timeout;
+        if (seckillSeconds>0){
+            timeout = setTimeout(function () {
+                $("#seckillSeconds").val(seckillSeconds - 1);
+                downSeckillSeconds();
+            }, 1000);
+        }else{
+            $("#buyButton").attr("disabled", true);
+            $("#seckillTip").html("秒杀已经结束");
+        }
+    }
 
 </script>
 </html>

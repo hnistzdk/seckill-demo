@@ -22,8 +22,9 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         //value序列化
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        //hash类型value序列化
+        //hash类型key序列化
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        //hash类型value序列化
         redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         //注入连接工厂
