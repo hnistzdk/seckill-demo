@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
 <head>
     <!--    <title>订单详情</title>-->
     <!--    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />-->
@@ -91,6 +91,7 @@
             },
             success: function (data) {
                 if (data.code == 200) {
+                    console.log('orderDetail',data.object)
                     render(data.object);
                 } else {
                     layer.msg(data.message);
@@ -103,8 +104,10 @@
     }
 
         function render(detail) {
-            var goods = detail.goodsVo;
-            var order = detail.torder;
+            console.log('detail',detail)
+            var goods = detail.goods;
+            var order = detail.order;
+            console.log('goods.goodsName',goods)
             $("#goodsName").text(goods.goodsName);
             $("#goodsImg").attr("src", goods.goodsImg);
             $("#goodsPrice").text(order.goodsPrice);

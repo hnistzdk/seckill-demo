@@ -28,4 +28,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     User getUserByCookie(String ticket);
+
+    /**
+     * 更新密码
+     * 用于测试缓存更新
+     * @param userTicket
+     * @param password
+     * @return
+     */
+    ApiResp updatePassWord(String userTicket,String password);
 }

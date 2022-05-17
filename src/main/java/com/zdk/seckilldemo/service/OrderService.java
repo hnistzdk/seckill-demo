@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zdk.seckilldemo.pojo.User;
 import com.zdk.seckilldemo.vo.ApiResp;
 import com.zdk.seckilldemo.vo.GoodsVo;
+import com.zdk.seckilldemo.vo.OrderDetailVo;
 
 /**
  * <p>
@@ -22,4 +23,11 @@ public interface OrderService extends IService<Order> {
      * @return
      */
     ApiResp seckill(User user, GoodsVo goodsVo);
+
+    /**
+     * 订单详情
+     * @param orderId
+     * @return
+     */
+    OrderDetailVo detail(Long orderId);
 }

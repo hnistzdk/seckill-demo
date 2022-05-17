@@ -65,7 +65,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 //        request.getSession().setAttribute("user:"+ticket, user);
         //将ticket放入cookie返回给前端
         CookieUtil.setCookie(request, response, "userTicket", ticket,60*60);
-        return ApiResp.success();
+        return ApiResp.success(ticket);
     }
 
     @Override
@@ -79,4 +79,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisUtil.expire("user"+ticket, 60*60);
         return JSONUtil.toBean(userStr, User.class);
     }
+
+    @Override
+    public ApiResp updatePassWord(String userTicket, String password) {
+        User user = getUserByCookie(userTicket);
+        if (user == null){
+            throw new GlobalException(ApiRespEnum.MOBILE_NOT_EXIST);
+        }
+        user.setPassword(Md5Util.encrypt(password, user.getSalt()));
+        int update = userMapper.updateById(user);
+        if (update>0){
+            //同时更新cookie和redis中的user
+            CookieUtil.setCookie(request, response, "userTicket", userTicket, 60*60);
+            redisUtil.set("user:"+userTicket, user,60*60);
+            return ApiResp.success();
+        }
+        return ApiResp.error(ApiRespEnum.PASSWORD_UPDATE_FAIL);
+    }
+
+
 }

@@ -38,7 +38,7 @@ public class LoginController extends BaseController{
     @ApiOperation(value = "登录接口")
     @PostMapping("/doLogin")
     @ResponseBody
-    public ApiResp toLogin(@Valid LoginVo loginVo) {
+    public ApiResp toLogin(LoginVo loginVo) {
         log.info("loginVo:{}",loginVo);
         return userService.doLogin(loginVo);
     }
