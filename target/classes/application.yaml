@@ -100,7 +100,7 @@ spring:
         max-attempts: 3
         #最大重试间隔时间
         max-interval: 10000ms
-        #重试的间隔乘数，比如配2。0  第一等10s 第二次等20s 第三次等40s
+        #重试的间隔乘数，比如配2 第一次等10s 第二次等20s 第三次等40s
         multiplier: 1
       mandatory: true
     publisher-returns: true

@@ -46,12 +46,9 @@ public class GoodsController extends BaseController{
     /**
      * 1000个线程 重复10次，测三次 相当于30000
      *
-     * 8核8线程i7-9700的windows 优化前QPS：1835.9/sec
-     * 1核2G的Linux 优化前QPS：853.3/sec
-     *
-     *
-     *  Windows页面缓存优化后QPS：4448.4/sec
-     *  优化后QPS：/sec
+     * 8核8线程i7-9700的windows
+     * 优化前QPS：1835.9/sec
+     * 进行页面缓存优化后QPS：4448.4/sec
      *
      * @param model
      * @param user

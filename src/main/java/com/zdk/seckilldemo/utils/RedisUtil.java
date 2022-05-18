@@ -209,6 +209,24 @@ public class RedisUtil {
     }
 
     /**
+     * 递增1
+     * @param key 键
+     * @return
+     */
+    public Long incr(String key) {
+        return stringRedisTemplate.opsForValue().increment(key);
+    }
+
+    /**
+     * 递减1
+     * @param key 键
+     * @return
+     */
+    public Long decr(String key) {
+        return stringRedisTemplate.opsForValue().decrement(key);
+    }
+
+    /**
      * 递增
      * @param key 键
      * @param delta 要增加几(大于0)

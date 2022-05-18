@@ -43,7 +43,7 @@ public class UserController {
     public void createUser() throws IOException {
         List<User> list = new ArrayList<>();
 //        //生成用户
-//        for (int i = 100; i < 500; i++) {
+//        for (int i = 500; i < 5000; i++) {
 //            User user = new User();
 //            user.setId(1233L + i);
 //            user.setNickname("user" + i);
@@ -54,7 +54,7 @@ public class UserController {
 //        userService.saveBatch(list);
 //        System.out.println("create user");
 
-        //读取用户
+//        //读取用户
         list = userService.list();
 
         //登录，生成UserTicket
@@ -66,8 +66,7 @@ public class UserController {
         }
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
         randomAccessFile.seek(0);
-        for (int i = 0; i < list.size(); i++) {
-            User user = list.get(i);
+        for (User user : list) {
             URL url = new URL(urlString);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setRequestMethod("POST");
