@@ -14,17 +14,20 @@ import com.zdk.seckilldemo.service.OrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zdk.seckilldemo.service.SeckillGoodsService;
 import com.zdk.seckilldemo.service.SeckillOrderService;
+import com.zdk.seckilldemo.utils.Md5Util;
 import com.zdk.seckilldemo.utils.RedisUtil;
 import com.zdk.seckilldemo.vo.ApiResp;
 import com.zdk.seckilldemo.vo.ApiRespEnum;
 import com.zdk.seckilldemo.vo.GoodsVo;
 import com.zdk.seckilldemo.vo.OrderDetailVo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * <p>
@@ -101,5 +104,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderDetailVo;
     }
 
+    @Override
+    public String createPath(User user, Long goodsId) {
+        String str = Md5Util.md5(UUID.randomUUID().toString());
+        //将秒杀地址的随机串存入redis
+        redisUtil.set("seckillPath:"+user.getId()+":"+goodsId, str,60);
+        return str;
+    }
 
+    @Override
+    public Boolean checkPath(User user, Long goodsId,String path) {
+        if (goodsId<0|| StringUtils.isBlank(path)){
+            return false;
+        }
+        String redisPath = redisUtil.get("seckillPath:" + user.getId() + ":" + goodsId);
+        return redisPath != null && redisPath.equals(path);
+    }
+
+    @Override
+    public Boolean checkCaptcha(User user, Long goodsId, String captcha) {
+        if (StringUtils.isBlank(captcha)){
+            return false;
+        }
+        String redisCaptcha = redisUtil.get("captcha:" + user.getId() + ":" + goodsId);
+        return captcha.equals(redisCaptcha);
+    }
 }

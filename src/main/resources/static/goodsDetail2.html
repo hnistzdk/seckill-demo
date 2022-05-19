@@ -70,10 +70,33 @@
         getDetails();
     });
 
-    function doSecKill() {
+    function getSeckillPath() {
+        let goodsId = $('#goodsId').val();
+        g_showLoading();
+        $.ajax({
+            url:"/seckill/path",
+            type:"GET",
+            data:{
+                goodsId:goodsId
+            },
+            success: function (data) {
+                if (data.code == 200) {
+                    let path = data.object;
+                    doSecKill(path);
+                } else {
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求错误");
+            }
+        });
+    }
+
+    function doSecKill(path) {
         console.log('goodsId',$('#goodsId').val())
         $.ajax({
-            url:'/seckill/doSeckill',
+            url:'/seckill/'+path+'/doSeckill',
             type: 'POST',
             data:{
                 goodsId:$('#goodsId').val()

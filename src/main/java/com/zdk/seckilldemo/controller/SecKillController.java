@@ -2,6 +2,8 @@ package com.zdk.seckilldemo.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.wf.captcha.ArithmeticCaptcha;
+import com.zdk.seckilldemo.exception.GlobalException;
 import com.zdk.seckilldemo.pojo.Order;
 import com.zdk.seckilldemo.pojo.SeckillOrder;
 import com.zdk.seckilldemo.pojo.User;
@@ -13,16 +15,15 @@ import com.zdk.seckilldemo.utils.RedisUtil;
 import com.zdk.seckilldemo.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022/5/16 21:02
  */
 @Api(value = "秒杀",tags = "秒杀")
+@Slf4j
 @Controller
 @RequestMapping("/seckill")
 public class SecKillController extends BaseController implements InitializingBean {
@@ -162,6 +164,38 @@ public class SecKillController extends BaseController implements InitializingBea
         return ApiResp.success(0);
     }
 
+    @ApiOperation(value = "v4秒杀接口-废弃")
+    @PostMapping("/doSeckill4")
+    @ResponseBody
+    @SuppressWarnings("all")
+    public ApiResp doSeckill4(User user, Long goodsId){
+        if (user == null){
+            return ApiResp.error(ApiRespEnum.SESSION_ERROR);
+        }
+        // TODO: 2022/5/18 优化2 内存标记防止库存为0仍访问redis
+        //通过内存标记减少对redis的访问 如果内存标记库存直接为0 返回错误
+        if (emptyStockMap.get(goodsId)){
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        //查redis判断该用户是否已秒杀成功过
+        String seckillOrder = redisUtil.get("seckillOrder:" + user.getId() +":"+ goodsId);
+        if (isOk(seckillOrder)){
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        // TODO: 2022/5/19 优化3 lua脚本预减库存 解决redis库存负数问题
+        //lua脚本进行预减库存
+        Long stock = redisUtil.execute(stockLuaScript, "seckillGoods:" + goodsId, Collections.EMPTY_LIST);
+        if (stock<0){
+            emptyStockMap.put(goodsId, true);
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        // TODO: 2022/5/18 异步下单
+        //RabbitMQ异步下单
+        orderMessageProducer.sendOderMessage(new SeckillOderMessage(user, goodsId));
+        //返回正在排队的结果0给用户
+        return ApiResp.success(0);
+    }
+
     /**
      * 连的redis都是另一台虚拟机的
      * 1000个线程重复10次,执行3次,即三万线程
@@ -184,12 +218,17 @@ public class SecKillController extends BaseController implements InitializingBea
      * @return
      */
     @ApiOperation(value = "正式秒杀接口")
-    @PostMapping("/doSeckill")
+    @PostMapping("/{path}/doSeckill")
     @ResponseBody
     @SuppressWarnings("all")
-    public ApiResp doSeckill(User user, Long goodsId){
+    public ApiResp doSeckill(@PathVariable String path, User user, Long goodsId){
         if (user == null){
             return ApiResp.error(ApiRespEnum.SESSION_ERROR);
+        }
+        // TODO: 2022/5/19 优化4 秒杀地址隐藏+校验
+        Boolean check = orderService.checkPath(user,goodsId,path);
+        if (!check){
+            return ApiResp.error(ApiRespEnum.REQUEST_ILLEGAL);
         }
         // TODO: 2022/5/18 优化2 内存标记防止库存为0仍访问redis
         //通过内存标记减少对redis的访问 如果内存标记库存直接为0 返回错误
@@ -238,6 +277,7 @@ public class SecKillController extends BaseController implements InitializingBea
      * @param goodsId
      * @return orderId:成功 -1:秒杀失败  0:排队中
      */
+    @ApiOperation(value = "查询秒杀结果")
     @GetMapping("/getResult")
     @ResponseBody
     public ApiResp getResult (User user, Long goodsId){
@@ -259,6 +299,42 @@ public class SecKillController extends BaseController implements InitializingBea
             }else {
                 return ApiResp.success(0);
             }
+        }
+    }
+    @ApiOperation(value = "获取秒杀地址")
+    @GetMapping("/path")
+    @ResponseBody
+    public ApiResp path(User user,Long goodsId,String captcha){
+        if (user == null){
+            return ApiResp.error(ApiRespEnum.SESSION_ERROR);
+        }
+        Boolean checkCaptcha = orderService.checkCaptcha(user, goodsId, captcha);
+        if (!checkCaptcha){
+            return ApiResp.error(ApiRespEnum.ERROR_CAPTCHA);
+        }
+        String path = orderService.createPath(user,goodsId);
+        return ApiResp.success(path);
+    }
+
+    @ApiOperation(value = "获取验证码")
+    @GetMapping("/captcha")
+    public void captcha(User user,Long goodsId){
+        if (user == null){
+            throw new GlobalException(ApiRespEnum.SESSION_ERROR);
+        }
+        //设置请求头为输出图片的类型
+        response.setContentType("image/jpg");
+        response.setHeader("Pargam", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        //生成算术验证码
+        ArithmeticCaptcha captcha = new ArithmeticCaptcha(130,32,3);
+        //验证码存入redis 设置5分钟失效
+        redisUtil.set("captcha:"+user.getId()+":"+goodsId,captcha.text(),300);
+        try {
+            captcha.out(response.getOutputStream());
+        } catch (IOException e) {
+            log.error("用户:{} 验证码生成失败", user.getId());
         }
     }
 }

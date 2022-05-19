@@ -81,7 +81,7 @@ public class GoodsController extends BaseController{
     }
 
     @ApiOperation(value = "商品详情页")
-    @GetMapping(value = "/toDetail",produces = "text/html;charset=utf-8")
+    @GetMapping(value = "/toDetail2",produces = "text/html;charset=utf-8")
     @ResponseBody
     public String toDetail(Model model,User user,Long goodsId){
         if (user == null){
@@ -131,9 +131,9 @@ public class GoodsController extends BaseController{
     }
 
     @ApiOperation(value = "商品详情页数据接口")
-    @GetMapping(value = "/toDetail2/{goodsId}")
+    @GetMapping(value = "/detail/{goodsId}")
     @ResponseBody
-    public ApiResp toDetail2(User user,@PathVariable Long goodsId){
+    public ApiResp detail(User user,@PathVariable Long goodsId){
         if (user == null){
             return null;
         }
