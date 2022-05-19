@@ -4,13 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -82,6 +81,115 @@ public class RedisUtil {
             }
         }
     }
+
+    /**
+     * 如果不存在 set String的value
+     * @param key
+     * @param value
+     * @return
+     */
+    public boolean setnx(String key,String value){
+        try {
+            return stringRedisTemplate.opsForValue().setIfAbsent(key, value);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 如果不存在 set Object的value
+     * @param key
+     * @param value
+     * @return
+     */
+    public boolean setnx(String key,Object value){
+        try {
+            return redisTemplate.opsForValue().setIfAbsent(key, value);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 如果不存在 set 并设置过期时间 默认单位秒
+     * @param key
+     * @param value
+     * @param time 过期时间 秒
+     * @return
+     */
+    public boolean setnx(String key,String value,long time){
+        try {
+            return stringRedisTemplate.opsForValue().setIfAbsent(key, value,time,TimeUnit.SECONDS);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 如果不存在 set 并设置过期时间 默认单位秒
+     * @param key
+     * @param value
+     * @param time 过期时间 秒
+     * @return
+     */
+    public boolean setnx(String key,Object value,long time){
+        try {
+            return redisTemplate.opsForValue().setIfAbsent(key, value,time,TimeUnit.SECONDS);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 如果不存在 set 并设置过期时间
+     * @param key
+     * @param value
+     * @param time
+     * @param timeUnit
+     * @return
+     */
+    public boolean setnx(String key,String value,long time,TimeUnit timeUnit){
+        try {
+            return stringRedisTemplate.opsForValue().setIfAbsent(key, value,time,timeUnit);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 如果不存在 set 并设置过期时间
+     * @param key
+     * @param value
+     * @param time
+     * @param timeUnit
+     * @return
+     */
+    public boolean setnx(String key,Object value,long time,TimeUnit timeUnit){
+        try {
+            return redisTemplate.opsForValue().setIfAbsent(key, value,time,timeUnit);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 执行lua脚本
+     * @param script
+     * @param key
+     * @param args
+     * @return
+     * @param <T>
+     */
+    public <T> T execute(RedisScript<T> script, String key, Object ...args){
+        return redisTemplate.execute(script, Collections.singletonList(key), Arrays.asList(args));
+    }
+
 
     // ============================String=============================
     /**

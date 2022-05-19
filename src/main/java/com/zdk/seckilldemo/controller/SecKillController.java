@@ -10,14 +10,12 @@ import com.zdk.seckilldemo.service.GoodsService;
 import com.zdk.seckilldemo.service.OrderService;
 import com.zdk.seckilldemo.service.SeckillOrderService;
 import com.zdk.seckilldemo.utils.RedisUtil;
-import com.zdk.seckilldemo.vo.ApiResp;
-import com.zdk.seckilldemo.vo.ApiRespEnum;
-import com.zdk.seckilldemo.vo.GoodsVo;
-import com.zdk.seckilldemo.vo.SeckillOderMessage;
+import com.zdk.seckilldemo.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,21 +50,18 @@ public class SecKillController extends BaseController implements InitializingBea
 
     private final Map<Long,Boolean> emptyStockMap = new ConcurrentHashMap<>();
 
+    @Autowired
+    private DefaultRedisScript<Long> stockLuaScript;
+
     /**
-     * 连的redis都是另一台虚拟机的
-     * 1000个线程重复10次,执行3次,即三万线程
-     * 8核8线程i7-9700的windows
-     * 优化前QPS：65.1/sec 发生超卖
-     * 优化后QPS：/sec
-     *
      * @param model
      * @param user
      * @param goodsId
      * @return
      */
-    @ApiOperation(value = "秒杀接口")
-    @PostMapping("/doSeckill")
-    public String doSeckill(Model model, User user, Long goodsId){
+    @ApiOperation(value = "v1秒杀接口-废弃")
+    @PostMapping("/doSeckill1")
+    public String doSeckill1(Model model, User user, Long goodsId){
         // TODO: 2022/5/18 老版秒杀,非前后端分离
         if (user == null){
             return "login";
@@ -96,20 +92,7 @@ public class SecKillController extends BaseController implements InitializingBea
         return "orderDetail";
     }
 
-    /**
-     * 连的redis都是另一台虚拟机的
-     * 1000个线程重复10次,执行3次,即三万线程
-     * 8核8线程i7-9700的windows
-     * 优化前QPS：1105.3/sec 发生超卖
-     * 优化1：一开始不查商品,直接扣库存,扣库存使用stock_count = stock_count - 1并且判断当前stock_count>0
-     *       订单插入增加user_id和goods_id的唯一索引防止超卖(仅在单体中不超卖 分布式系统不能解决超卖)
-     *       同时在判断是否重复秒杀时，将秒杀订单存在redis，提高速度
-     * 优化1后QPS：2382.1~2410.4/sec 没有超卖发生
-     * @param user
-     * @param goodsId
-     * @return
-     */
-    @ApiOperation(value = "秒杀接口")
+    @ApiOperation(value = "v2秒杀接口-废弃")
     @PostMapping("/doSeckill2")
     @ResponseBody
     @SuppressWarnings("all")
@@ -118,7 +101,6 @@ public class SecKillController extends BaseController implements InitializingBea
             return ApiResp.error(ApiRespEnum.SESSION_ERROR);
         }
         // TODO: 2022/5/18 优化1秒杀
-        /*
         GoodsVo goodsVo = goodsService.findGoodsVoById(goodsId);
         //先判一次库存是否大于0
         if (goodsVo.getStockCount()<1){
@@ -136,9 +118,18 @@ public class SecKillController extends BaseController implements InitializingBea
             return ApiResp.error(ApiRespEnum.ERROR);
         }
         OrderDetailVo orderDetailVo = new OrderDetailVo().setOrder((Order) result.getObject()).setGoods(goodsVo);
-        return ApiResp.success(orderDetailVo);*/
+        return ApiResp.success(orderDetailVo);
+    }
 
-        // TODO: 2022/5/18 优化2 redis预减库存
+    @ApiOperation(value = "v3秒杀接口-废弃")
+    @PostMapping("/doSeckill3")
+    @ResponseBody
+    @SuppressWarnings("all")
+    public ApiResp doSeckill3(User user, Long goodsId){
+        if (user == null){
+            return ApiResp.error(ApiRespEnum.SESSION_ERROR);
+        }
+        // TODO: 2022/5/18 优化2 内存标记防止库存为0仍访问redis
         //通过内存标记减少对redis的访问 如果内存标记库存直接为0 返回错误
         if (emptyStockMap.get(goodsId)){
             return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
@@ -148,6 +139,14 @@ public class SecKillController extends BaseController implements InitializingBea
         if (isOk(seckillOrder)){
             return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
         }
+        // TODO: 2022/5/19 2022/5/18 优化2 redis预减库存
+        /*
+         * 这里直接去减库存是有问题的,在减少的时候并没有去判断它的值是否还能减,
+         * 这样假设这个用户的10个请求线程同时来到这个位置,就会直接将redis库存减到0,
+         * 而后来的线程还会继续减为负数,而原来我们的处理是,减完后,判一下库存是否小于0了,小于0则加回去,
+         * 这样虽然能够解决问题,但在难以保证在极端情况下还能正确,因为这整个操作并不原子性的,
+         * 我们减redis库存也需要先比较是否能减,然后再减,所以要保证这两步操作的原子性 使用lua脚本
+         */
         //进行预减库存
         Long stock = redisUtil.decr("seckillGoods:" + goodsId);
         //如果库存被减为负数了,把库存加回来 修改内存标记  返回库存不足
@@ -156,6 +155,60 @@ public class SecKillController extends BaseController implements InitializingBea
             redisUtil.incr("seckillGoods:" + goodsId);
             return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
         }
+        // TODO: 2022/5/18 异步下单
+        //RabbitMQ异步下单
+        orderMessageProducer.sendOderMessage(new SeckillOderMessage(user, goodsId));
+        //返回正在排队的结果0给用户
+        return ApiResp.success(0);
+    }
+
+    /**
+     * 连的redis都是另一台虚拟机的
+     * 1000个线程重复10次,执行3次,即三万线程
+     * 10件秒杀商品
+     * 8核8线程i7-9700的windows
+     * 优化前QPS：1105.3/sec 发生超卖
+     * 优化1：一开始不查商品,直接扣库存,扣库存使用stock_count = stock_count - 1并且判断当前stock_count>0
+     *       订单插入增加user_id和goods_id的唯一索引防止超卖(仅在单体中不超卖 分布式系统不能解决超卖)
+     *       同时在判断是否重复秒杀时，将秒杀订单存在redis，提高速度
+     * 优化1后QPS：2382.1~2410.4/sec 没有超卖发生
+     *
+     * 优化2:
+     *      1.使用redis进行预减库存(lua脚本)
+     *      2.使用内存标记防止库存为0后仍较多线程访问redis
+     *      3.使用RabbitMQ进行异步下单
+     * 优化2后QPS：4943.2/sec 没有超卖发生
+     *
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @ApiOperation(value = "正式秒杀接口")
+    @PostMapping("/doSeckill")
+    @ResponseBody
+    @SuppressWarnings("all")
+    public ApiResp doSeckill(User user, Long goodsId){
+        if (user == null){
+            return ApiResp.error(ApiRespEnum.SESSION_ERROR);
+        }
+        // TODO: 2022/5/18 优化2 内存标记防止库存为0仍访问redis
+        //通过内存标记减少对redis的访问 如果内存标记库存直接为0 返回错误
+        if (emptyStockMap.get(goodsId)){
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        //查redis判断该用户是否已秒杀成功过
+        String seckillOrder = redisUtil.get("seckillOrder:" + user.getId() +":"+ goodsId);
+        if (isOk(seckillOrder)){
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        // TODO: 2022/5/19 优化3 lua脚本预减库存 解决redis库存负数问题
+        //lua脚本进行预减库存
+        Long stock = redisUtil.execute(stockLuaScript, "seckillGoods:" + goodsId, Collections.EMPTY_LIST);
+        if (stock<0){
+            emptyStockMap.put(goodsId, true);
+            return ApiResp.error(ApiRespEnum.REPEAT_ERROR);
+        }
+        // TODO: 2022/5/18 异步下单
         //RabbitMQ异步下单
         orderMessageProducer.sendOderMessage(new SeckillOderMessage(user, goodsId));
         //返回正在排队的结果0给用户
