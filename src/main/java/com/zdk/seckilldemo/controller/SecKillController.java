@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.wf.captcha.ArithmeticCaptcha;
 import com.zdk.seckilldemo.exception.GlobalException;
+import com.zdk.seckilldemo.limiter.AccessLimiter;
 import com.zdk.seckilldemo.pojo.Order;
 import com.zdk.seckilldemo.pojo.SeckillOrder;
 import com.zdk.seckilldemo.pojo.User;
@@ -302,6 +303,7 @@ public class SecKillController extends BaseController implements InitializingBea
         }
     }
     @ApiOperation(value = "获取秒杀地址")
+    @AccessLimiter(second = 6,maxCount = 4,needLogin = true)
     @GetMapping("/path")
     @ResponseBody
     public ApiResp path(User user,Long goodsId,String captcha){
@@ -309,6 +311,7 @@ public class SecKillController extends BaseController implements InitializingBea
             return ApiResp.error(ApiRespEnum.SESSION_ERROR);
         }
         Boolean checkCaptcha = orderService.checkCaptcha(user, goodsId, captcha);
+        checkCaptcha = true;
         if (!checkCaptcha){
             return ApiResp.error(ApiRespEnum.ERROR_CAPTCHA);
         }

@@ -50,7 +50,7 @@ spring:
       connection-test-query: SELECT 1
   #redis配置
   redis:
-    host: 211.69.238.77
+    host: 211.69.238.105
     password: zdk13696086376.
     port: 6379
     database: 1
@@ -69,7 +69,7 @@ spring:
   #RabbitMQ
   rabbitmq:
     #服务器
-    host: 211.69.238.77
+    host: 211.69.238.105
     #用户名
     username: admin
     #密码

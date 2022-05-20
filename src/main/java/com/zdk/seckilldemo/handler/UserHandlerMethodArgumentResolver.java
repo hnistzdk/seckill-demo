@@ -2,8 +2,7 @@ package com.zdk.seckilldemo.handler;
 
 import com.zdk.seckilldemo.pojo.User;
 import com.zdk.seckilldemo.service.UserService;
-import com.zdk.seckilldemo.utils.CookieUtil;
-import org.apache.commons.lang3.StringUtils;
+import com.zdk.seckilldemo.utils.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -11,8 +10,6 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author zdk
@@ -38,11 +35,11 @@ public class UserHandlerMethodArgumentResolver implements HandlerMethodArgumentR
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
+/*        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         String userTicket = CookieUtil.getCookieValue(request, "userTicket");
         if (StringUtils.isBlank(userTicket)){
             return null;
-        }
-        return userService.getUserByCookie(userTicket);
+        }*/
+        return UserContext.getUser();
     }
 }
